@@ -3,7 +3,7 @@
 > **Status:** Pre-Alpha / Prototype
 > **Author:** EternalsLegacy
 
-This project is currently in the early planning and development stages. It is a solo project aiming to recreate classic survival horror mechanics (Fixed Camera Angles, Tank Controls) on the Roblox platform.
+This project is currently in the early planning and development stages. It is a solo project aiming to recreate classic survival horror mechanics on the Roblox platform.
 
 The development workflow leverages external industry-standard tools for version control and code editing, synchronized into Roblox Studio.
 
