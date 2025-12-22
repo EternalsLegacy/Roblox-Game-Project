@@ -32,7 +32,7 @@ This project utilizes a modular **Service/Controller** architecture.
 This table outlines how local VS Code directories map to Roblox Studio Services via Rojo.
 
 | VS Code Directory | Roblox Studio Service |
-| :--- | :--- | :--- |
+| :--- | :--- |
 | `src/client` | **StarterPlayerScripts** |
 | `src/server` | **ServerScriptService**  |
 | `src/shared` | **ReplicatedStorage**    |
