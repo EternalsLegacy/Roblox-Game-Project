@@ -1,4 +1,4 @@
-# 🚧 Project: WIP
+# Project: WIP
 
 > **Status:** Pre-Alpha / Prototype
 > **Author:** EternalsLegacy
