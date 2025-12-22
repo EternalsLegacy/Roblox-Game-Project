@@ -10,6 +10,12 @@ local CameraManagerModule = require(ReplicatedStorage:WaitForChild("Systems"):Wa
 local CAMERA_ZONES_FOLDER = Workspace:WaitForChild("CameraZones")
 local PLAYER = Players.LocalPlayer
 
+-- Settings --
+local SWITCH_COOLDOWN = 0.5
+
+-- State --
+local LastSwitchTime = 0
+
 -- Initialize Manager --
 local MainCameraManager = CameraManagerModule.new()
 
@@ -46,6 +52,12 @@ function Zone:TrySwitchCamera(HitOrCharacter: Instance)
 		if MainCameraManager.CurrentViewPart == self.View then
 			return
 		end
+
+		if (tick() - LastSwitchTime) < SWITCH_COOLDOWN then
+			return
+		end
+
+		LastSwitchTime = tick()
 
 		MainCameraManager:SetView(self.View, 0)
 	end
