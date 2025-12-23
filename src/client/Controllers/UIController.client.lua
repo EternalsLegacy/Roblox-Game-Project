@@ -3,6 +3,10 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local UserInputService = game:GetService("UserInputService")
 
+-- Variables --
+local NetworkFolder = ReplicatedStorage:WaitForChild("Network")
+local RequestKeySelectionEvent = NetworkFolder:WaitForChild("RequestKeySelection")
+
 -- Imports --
 local InventoryMenuClass = require(Players.LocalPlayer.PlayerScripts:WaitForChild("UI"):WaitForChild("InventoryMenu"))
 
@@ -37,13 +41,19 @@ function UIController:Start()
 	InventoryInstance = InventoryMenuClass.new()
 	
 	UserInputService.InputBegan:Connect(function(Input, GameProcessed)
-		
 		if Input.KeyCode == KEY_INVENTORY then
 			self:ToggleInventory()
 			return
 		end
 		
 		if GameProcessed then return end
+	end)
+	
+	RequestKeySelectionEvent.OnClientEvent:Connect(function(DoorModel, RequiredKeyName)
+		
+		if not IsMenuOpen then
+			self:ToggleInventory()
+		end
 	end)
 end
 
