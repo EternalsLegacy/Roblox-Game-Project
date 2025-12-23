@@ -3,25 +3,37 @@ local CollectionService = game:GetService("CollectionService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
 
--- Variables --
-local RequestKeySelectionEvent = ReplicatedStorage.Network.RequestKeySelection
-
 local Door = {}
 Door.__index = Door
 
-type DoorInstance = typeof(setmetatable({}, Door))
+-- Constants --
+local TWEEN_INFO = TweenInfo.new(
+	1.2,
+	Enum.EasingStyle.Quad,
+	Enum.EasingDirection.Out
+)
+local OPEN_ANGLE = 90
+
+-- Asset Paths
+local ASSETS = ReplicatedStorage:WaitForChild("Assets")
+local SOUNDS = ASSETS:WaitForChild("Sounds")
 
 -- Functions --
 function Door.new(Model: Model)
 	local self = setmetatable({}, Door)
 	
 	self.Model = Model
-	self.DoorPart = Model:WaitForChild("DoorRoot") :: BasePart
-	self.Hinge = self.DoorPart:FindFirstChildWhichIsA("HingeConstraint", true)
-	self.Prompt = self.DoorPart:FindFirstChildWhichIsA("ProximityPrompt", true)
-
+	self.HingePart = Model:WaitForChild("HingePart") :: BasePart
+	self.Prompt = Model:FindFirstChildWhichIsA("ProximityPrompt", true)
+	
+	-- State
 	self.IsLocked = Model:GetAttribute("IsLocked") or false
 	self.KeyName = Model:GetAttribute("KeyName") or ""
+	self.IsOpen = false
+	self.IsTweening = false
+	
+	self.ClosedCFrame = self.HingePart.CFrame
+	self.OpenCFrame = self.ClosedCFrame * CFrame.Angles(0, math.rad(OPEN_ANGLE), 0)
 	
 	self:Initialize()
 	
@@ -29,26 +41,25 @@ function Door.new(Model: Model)
 end
 
 function Door:Initialize()
-	if not self.Hinge then
-		warn("Door missing HingeConstraint: " .. self.Model.Name)
-		return
-	end
-	
-	self.Hinge.ActuatorType = Enum.ActuatorType.Servo
-	self.Hinge.ServoMaxTorque = 100000
-	self.Hinge.TargetAngle = 0
-	
 	if self.Prompt then
+		self.Prompt.Style = Enum.ProximityPromptStyle.Custom
+		
 		self.Prompt.Triggered:Connect(function(Player)
 			self:OnInteract(Player)
 		end)
-		
 		self:UpdatePromptVisuals()
 	end
 end
 
 function Door:UpdatePromptVisuals()
 	if not self.Prompt then return end
+	
+	if self.IsOpen then
+		self.Prompt.Enabled = false
+		return
+	end
+	
+	self.Prompt.Enabled = true
 	
 	if self.IsLocked then
 		if self.KeyName ~= "" then
@@ -59,47 +70,79 @@ function Door:UpdatePromptVisuals()
 			self.Prompt.ObjectText = "Door"
 		end
 	else
-		self.Prompt.Enabled = false
+		self.Prompt.ActionText = "Open"
+		self.Prompt.ObjectText = "Door"
 	end
 end
 
 function Door:OnInteract(Player: Player)
-    if self.KeyName ~= "" then
-        RequestKeySelectionEvent:FireClient(Player, self.Model, self.KeyName)
-    else
-        self:Unlock()
-    end
+	if self.IsOpen or self.IsTweening then return end
+	
+	if self.IsLocked then
+		if self.KeyName ~= "" then
+			local RequestEvent = ReplicatedStorage.Network:FindFirstChild("RequestKeySelection")
+			if RequestEvent then
+				RequestEvent:FireClient(Player, self.Model, self.KeyName)
+			end
+			self:PlaySound("LockedDoor")
+		else
+			self:Unlock()
+			self:Open()
+		end
+		return
+	end
+	
+	self:Open()
+end
+
+function Door:PlaySound(soundName: string)
+	local SoundTemplate = SOUNDS:FindFirstChild(soundName)
+	if SoundTemplate then
+		local Sound = SoundTemplate:Clone()
+		Sound.Parent = self.HingePart
+		Sound:Play()
+		game.Debris:AddItem(Sound, Sound.TimeLength + 1)
+	else
+		warn("Sound not found in Assets/Sounds: " .. soundName)
+	end
 end
 
 function Door:Unlock()
 	self.IsLocked = false
 	self.Model:SetAttribute("IsLocked", false)
-	
-	if self.Hinge then
-		self.Hinge.ActuatorType = Enum.ActuatorType.None
-	end
-	
-	local Sound = Instance.new("Sound")
-	Sound.SoundId = "rbxassetid://339599660"
-	Sound.Parent = self.DoorPart
-	Sound:Play()
-	game.Debris:AddItem(Sound, 2)
-	
 	self:UpdatePromptVisuals()
 end
 
+function Door:Open()
+	if self.IsOpen then return end
+	
+	self.IsTweening = true
+	self.IsOpen = true
+	
+	self:PlaySound("OpenDoor")
+	
+	local Tween = TweenService:Create(self.HingePart, TWEEN_INFO, {
+		CFrame = self.OpenCFrame
+	})
+	
+	Tween:Play()
+	
+	Tween.Completed:Connect(function()
+		self.IsTweening = false
+		self:UpdatePromptVisuals()
+	end)
+end
+
 function Door.Start()
-	for _, instance in ipairs(CollectionService:GetTagged("Door")) do
-		if instance:IsA("Model") then
-			Door.new(instance)
-		end
+	local function Setup(instance)
+		if instance:IsA("Model") then Door.new(instance) end
 	end
 	
-	CollectionService:GetInstanceAddedSignal("Door"):Connect(function(instance)
-		if instance:IsA("Model") then
-			Door.new(instance)
-		end
-	end)
+	for _, instance in ipairs(CollectionService:GetTagged("Door")) do
+		Setup(instance)
+	end
+	
+	CollectionService:GetInstanceAddedSignal("Door"):Connect(Setup)
 end
 
 return Door
