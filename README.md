@@ -45,29 +45,32 @@ Below is the file tree of the `src` repository with descriptions of each module'
 
 ```text
 src
+src
 ├── 🔵 client  (StarterPlayerScripts)
 │   ├── ClientLoader.client.lua      # Client Bootstrapper: Initializes all Controllers.
-│   └── Controllers                  # Singleton modules for client-side systems.
-│       ├── CameraController.client.lua  # Manages Zone-Detection & Camera logic.
-│       ├── AudioController.client.lua   # (Planned) Handles music, SFX, and ambience.
-│       ├── InputController.client.lua   # (Planned) Handles Tank-Controls & User Input.
-│       └── UIController.client.lua      # (Planned) Manages GUI elements (Inventory, HUD).
+│   ├── Controllers                  # Singleton modules for client-side systems.
+│   │   ├── CameraController.client.lua      # Manages Fixed Camera Zone triggers.
+│   │   ├── CharacterController.client.lua   # Handles movement speed & Head-Tracking (LookAt Mouse).
+│   │   ├── InteractionController.client.lua # Manages custom ProximityPrompt visuals (SH2 Style).
+│   │   └── UIController.client.lua          # Manages Menu states (Inventory, Maps).
+│   │
+│   └── UI                           # View Classes (Code-First UI Generation).
+│       ├── InventoryMenu.lua        # RE2 Remake style Grid Inventory.
+│       ├── InteractionIcon.lua      # Floating 2D Interaction Prompt.
+│       ├── MapMenu.lua              # (WIP) Map Interface.
+│       └── NotesMenu.lua            # (WIP) Document Reader.
 │
 ├── 🟢 server  (ServerScriptService)
 │   ├── Core
-│   │   └── GameLoader.server.lua    # Server Bootstrapper: Initializes Services.
-│   ├── Services                     # Core game mechanics (Server Singleton Pattern).
-│   │   ├── CombatService.lua        # Damage calculation and enemy interaction.
-│   │   ├── InventoryService.lua     # Backend inventory management.
-│   │   └── PlayerDataService.lua    # Datastore saving/loading.
-│   └── Components                   # OOP Classes for physical map objects (Doors, Pickups).
+│   │   └── GameLoader.server.lua    # Server Bootstrapper.
+│   └── Components                   # OOP Classes for interactive objects.
+│       └── Door.lua                 # Logic for Locked/Key/Tweening Doors.
 │
 └── 🟡 shared  (ReplicatedStorage)
-    ├── Assets                       # Populated in Studio: Sounds, VFX, UI models.
-    ├── Common                       # Utility modules & definitions.
-    │   ├── Data                     # Static Data (Loot tables, Item stats).
-    │   ├── Types                    # Luau Type definitions (export type ...).
-    │   └── Utils                    # Math & Helper functions.
-    ├── Network                      # RemoteEvents / RemoteFunctions definitions.
-    └── Systems                      # Standalone Logic Modules.
-        └── CameraManager.lua        # OOP Class for camera manipulation (Tweening/Cuts).
+    ├── Assets                       # (Ignored by Rojo) Sounds, VFX, Models.
+    ├── Network                      # (Ignored by Rojo) RemoteEvents.
+    ├── Common                       # Utility modules.
+    │   └── Utils
+    │       └── UIBuilder.lua        # Factory module for creating UI instances via code.
+    └── Systems
+        └── CameraManager.lua        # OOP Class for camera manipulation.
